@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ITP4507 Assignment One — SDFMS</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm; }
+  body { font-family: "Noto Sans", "Liberation Sans", sans-serif; color: #1c2833; line-height: 1.45; font-size: 11.5pt; max-width: 920px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 22pt; margin-bottom: 0.2em; }
+  h2 { font-size: 16pt; margin-top: 1.6em; border-bottom: 2px solid #1b4f72; padding-bottom: 0.2em; page-break-after: avoid; }
+  h3 { font-size: 13pt; margin-top: 1.3em; page-break-after: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 0.6em 0 1em; font-size: 10.5pt; }
+  th, td { border: 1px solid #c5d0dc; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #1b4f72; color: white; }
+  code, pre { font-family: "JetBrains Mono", "Liberation Mono", monospace; font-size: 9.5pt; }
+  pre { background: #f4f7fb; border: 1px solid #d5dee8; padding: 10px 12px; overflow-x: auto; }
+  figure { margin: 0.8em 0 1.2em; page-break-inside: avoid; }
+  figcaption { font-size: 10pt; color: #345; margin-top: 0.35em; }
+  img.diagram { width: 100%; height: auto; border: 1px solid #d5dee8; }
+  img.shot { width: 100%; height: auto; border: 1px solid #d5dee8; }
+  .cover { border: 1px solid #1b4f72; padding: 28px 32px; margin-bottom: 2em; }
+  .cover p { margin: 0.3em 0; }
+  .fill { font-weight: 700; }
+  .pass { color: #0e6655; font-weight: 700; }
+  ol li, ul li { margin: 0.25em 0; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <p>Hong Kong Institute of Information Technology</p>
+  <p>Higher Diploma in Software Engineering (IT114105)</p>
+  <h1>Smart Delivery Fleet Management System</h1>
+  <p>Module: Contemporary Topics in Software Engineering (ITP4507)</p>
+  <p>Assignment One</p>
+  <p>Student name: 咲戀</p>
+  <p class="fill">Student number: ____________________</p>
+  <p>Date: 10 November 2026</p>
+</section>
+
+<h2>1. Assumptions</h2>
+<p>The menu tokens in the assignment are fixed. The program follows them and makes the following decisions where the specification is silent.</p>
+<ol>
+  <li>Command tokens are case-sensitive (<code>c</code>, <code>sf</code>, <code>cn</code>, and the rest). Fleet type codes are not: <code>v</code> and <code>V</code> both create a delivery van fleet, and <code>r</code> and <code>R</code> both create a refrigerated truck fleet.</li>
+  <li>Fleet IDs are unique in the whole system. Driver IDs are unique inside one fleet only. The same driver ID may exist on another fleet as a separate driver object.</li>
+  <li>A driver is typed as <code>id, name</code>. The name is everything after the first comma, with surrounding spaces removed. A fleet name may contain spaces. <code>CENTRAL EXPRESS</code> is one name.</li>
+  <li>The five commands that change stored data are undoable: create fleet, add driver, modify driver role, delete driver, and change fleet name. Set current fleet, show fleet, display all fleets, list undo/redo, undo, and redo are commands, but they are not put on the undo list. Exit is handled by the menu loop.</li>
+  <li>Undo and redo are last-in, first-out. A new successful undoable command clears the redo list. A failed command changes nothing and does not clear the redo list.</li>
+  <li>Creating a fleet also makes it the current fleet. Undoing that create removes the fleet and restores whichever fleet was current before it. Redoing the create puts the same fleet object back and makes it current again.</li>
+  <li>Modify role and change name remember the fleet or driver they touched. Undo restores that object even if the user has since switched the current fleet.</li>
+  <li>An empty role group is printed as <code>Heading: NIL</code>. Drivers in a group stay in the order they were added. Undoing a delete puts the driver back at the same index.</li>
+  <li><code>Vector</code> is the concrete <code>AbstractList</code> used for the drivers of a fleet. The system keeps everything in memory. Nothing is written to a file.</li>
+  <li>There is no delete-fleet command. A fleet leaves the system only when its create command is undone.</li>
+  <li>If the driver id and name are readable, add-driver always asks for the role next. A duplicate id is rejected after the role has been read, so the role number is not mistaken for the next command. A driver id that cannot be parsed is rejected without asking for a role. Modify and delete do not ask for a role when the driver id is missing.</li>
+  <li>Both lists are printed from oldest to newest. On the redo list, the oldest entry was undone first. The command that will be redone next is the last line of the redo list.</li>
+</ol>
+
+<h2>2. Application design</h2>
+<p>The program is a single-user console application. <code>Main</code> prints the menu, asks <code>CommandFactory</code> for a command, and executes it. <code>FleetManager</code> is the receiver: it holds the fleets in creation order and the current fleet. All source files are in the default package so that <code>run.bat</code> can compile them with <code>javac *.java</code> and start them with <code>java Main</code>.</p>
+<p>The classes supplied by the brief are kept. <code>VehicleFleet</code> is abstract. <code>updateDriverRole()</code> and <code>showFleet()</code> are abstract operations. <code>DeliveryVanFleet</code> and <code>RefrigeratedTruckFleet</code> implement them and own their role constants. <code>Driver</code> still stores the role as an <code>int</code>. The fleet, not the driver, knows what that integer means.</p>
+
+<figure>
+  <img class="diagram" src="figures/domain.png" alt="Domain class diagram">
+  <figcaption>Figure 1. Domain model. <code>VehicleFleet</code> aggregates drivers. The two concrete fleets inherit the common operations and implement the abstract ones. Italic operations are abstract.</figcaption>
+</figure>
+
+<h3>2.1 Open-Closed Principle</h3>
+<p>Commands never mention <code>DeliveryVanFleet</code> or <code>RefrigeratedTruckFleet</code>. They call <code>updateDriverRole()</code>, <code>showFleet()</code>, <code>getRolePrompt()</code>, and <code>getRoleListName()</code> on a <code>VehicleFleet</code>. Each subclass accepts only its own role codes and supplies its own headings, history phrase, and creation message.</p>
+<p>A motorcycle-delivery fleet, or an electric-cargo-bike fleet, can be added without editing those commands:</p>
+<ol>
+  <li>Add a subclass of <code>VehicleFleet</code>. Give it role constants, and implement <code>updateDriverRole()</code>, <code>showFleet()</code>, and the title methods.</li>
+  <li>Add a class that implements <code>FleetComponentFactory</code> and creates that fleet and its drivers.</li>
+  <li>Register the factory in <code>Main</code>, next to the two factories that are already registered.</li>
+</ol>
+<p>The type prompt is built from the registered factories, in registration order. With the two current factories it is exactly <code>v = delivery van | r = refrigerated truck</code>. A third registration appears in the prompt on its own. The existing fleet classes and the command classes stay closed.</p>
+
+<h3>2.2 Command history and factories</h3>
+<figure>
+  <img class="diagram" src="figures/command.png" alt="Command pattern class diagram">
+  <figcaption>Figure 2. Command pattern. <code>Main</code> is the invoker. <code>CommandFactory</code> creates the concrete commands. Green commands are stored by the caretaker. Blue commands run and are then discarded. <code>FleetManager</code> is the receiver.</figcaption>
+</figure>
+<figure>
+  <img class="diagram" src="figures/factory.png" alt="Factory class diagram">
+  <figcaption>Figure 3. Factories. <code>FleetComponentFactory</code> is the abstract factory. <code>CommandFactory</code> and <code>DriverFactory</code> are simple factories.</figcaption>
+</figure>
+<figure>
+  <img class="diagram" src="figures/memento.png" alt="Memento class diagram">
+  <figcaption>Figure 4. Memento pattern. Each caretaker command stores the before and after mementos. Only the originator writes the saved value back.</figcaption>
+</figure>
+
+<h2>3. Design patterns</h2>
+
+<h3>3.1 Command</h3>
+<p>The Command pattern turns each menu action into an object with <code>execute()</code>. Undoable commands also implement <code>undo()</code> and <code>redo()</code>, so the history can store the command itself.</p>
+<table>
+  <tr><th>Role</th><th>Class</th></tr>
+  <tr><td>Command</td><td><code>Command</code></td></tr>
+  <tr><td>Concrete command</td><td>The eleven command classes, one per menu action including undo, redo, and list</td></tr>
+  <tr><td>Invoker</td><td><code>Main</code></td></tr>
+  <tr><td>Receiver</td><td><code>FleetManager</code>, and the fleet or driver the command changes</td></tr>
+  <tr><td>Client</td><td><code>Main</code> together with <code>CommandFactory</code></td></tr>
+</table>
+<p><code>Caretaker</code> keeps two lists, oldest first. <code>record</code> appends a command and clears redo. Undo takes the last undo entry, calls <code>undo()</code>, and appends that command to the redo list. Redo does the opposite and does not clear the remaining redo entries. Undo and redo are themselves commands, so the menu treats them like every other action, but <code>isUndoable()</code> is false so they are not stored as extra history.</p>
+<p>Create, add, and delete undo by the inverse action. Create removes the fleet it added and restores the previous current fleet. Add drops the driver. Delete inserts the same driver object at the saved index. Redo repeats the original effect on that same object, so a later command that already points at the driver or the fleet is still valid.</p>
+<p>The text on the history list is fixed when the command succeeds. Create keeps the original fleet name, so a later rename does not rewrite the create line. Modify records the new role. Change-name records the new name. This matches the sample undo list.</p>
+
+<h3>3.2 Factory and Abstract Factory</h3>
+<p>Three creation jobs are kept out of the commands.</p>
+<ul>
+  <li><strong>Abstract factory.</strong> <code>FleetComponentFactory</code> creates the products of one fleet family: the <code>VehicleFleet</code> subclass and the <code>Driver</code> objects added to it. <code>DeliveryVanFleetFactory</code> and <code>RefrigeratedTruckFleetFactory</code> are the concrete factories. <code>FleetFactoryProvider</code> maps the type code the user typed onto a factory. <code>CreateFleetCommand</code> and <code>AddDriverCommand</code> ask the provider. They never call <code>new DeliveryVanFleet</code> or <code>new Driver</code>.</li>
+  <li><strong>Simple factory for drivers.</strong> Both concrete fleet factories delegate to <code>DriverFactory</code>. There is one driver class in the brief, so the driver product does not vary by subclass. The factory still gives one place that constructs drivers.</li>
+  <li><strong>Simple factory for commands.</strong> <code>CommandFactory.create</code> maps a menu token to a command object. <code>Main</code> does not contain a list of <code>new CreateFleetCommand</code> and the other constructors.</li>
+</ul>
+<p>Abstract factory is the right choice for fleets because a new fleet variety is a new product family chosen by a code. The command that uses the family does not change. Simple factory is enough for commands because the menu tokens are fixed by the brief.</p>
+
+<h3>3.3 Memento</h3>
+<p>Modify role and change name overwrite a value. The old value has to be kept somewhere the command can hand back later. The Memento pattern does that without the command taking the field apart.</p>
+<table>
+  <tr><th>Role</th><th>Modify driver role</th><th>Change fleet name</th></tr>
+  <tr><td>Originator</td><td><code>Driver</code></td><td><code>VehicleFleet</code></td></tr>
+  <tr><td>Memento</td><td><code>DriverRoleMemento</code></td><td><code>FleetNameMemento</code></td></tr>
+  <tr><td>Caretaker</td><td><code>ModifyDriverRoleCommand</code></td><td><code>ChangeFleetNameCommand</code></td></tr>
+</table>
+<p>On execute, the command asks the originator for a memento of the current value, then performs the change. For a role, the change goes through <code>VehicleFleet.updateDriverRole()</code>, so the concrete fleet still checks its own role codes. The command then takes a second memento of the new value. Undo gives the first memento back to the originator. Redo gives the second one back. The command does not call <code>getRole()</code> or <code>getName()</code> on the memento. The originator is the class that copies the saved value into <code>setRole</code> or <code>setName</code>.</p>
+<p>Create, add, and delete are not done with a memento. Each has a direct inverse, and a memento of a whole fleet would copy drivers that other commands already know how to add and remove. The history is still one list of commands. Memento is the mechanism inside the two commands that overwrite a field. The caretaker of that history is <code>Caretaker</code>. The caretaker of each memento is the command that holds it.</p>
+
+<h3>3.4 Polymorphism</h3>
+<p>The same add command and the same show command work for both fleets. <code>showFleet()</code> prints <code>Van Driver</code> and <code>Courier Driver</code> for a van fleet, and <code>Refrigerated-Truck Driver</code> and <code>Cold-Chain Delivery Driver</code> for a refrigerated fleet. <code>updateDriverRole()</code> in <code>DeliveryVanFleet</code> accepts only roles 1 and 2 as defined by that class. The refrigerated subclass accepts only its own constants, which happen to use the same numbers but mean different jobs. A caller cannot set a van role by editing the refrigerated class, and it does not need a type test.</p>
+
+<h2>4. User guide</h2>
+<p>Start the program with <code>run.bat</code> (Windows) or <code>javac *.java</code> then <code>java Main</code>. The menu is printed before every command. Until a fleet exists, the current-fleet line is omitted. After that it shows the current fleet id and name.</p>
+<table>
+  <tr><th>Token</th><th>What it asks</th><th>What it does</th></tr>
+  <tr><td><code>c</code></td><td>Fleet type, fleet ID, fleet name</td><td>Creates the fleet and makes it current</td></tr>
+  <tr><td><code>s</code></td><td>Fleet ID</td><td>Selects the current fleet</td></tr>
+  <tr><td><code>a</code></td><td><code>id, name</code> and a role number</td><td>Adds a driver to the current fleet</td></tr>
+  <tr><td><code>m</code></td><td>Driver ID and a role number</td><td>Changes that driver's role</td></tr>
+  <tr><td><code>d</code></td><td>Driver ID</td><td>Removes that driver</td></tr>
+  <tr><td><code>sf</code></td><td>Nothing</td><td>Prints the current fleet, grouped by role</td></tr>
+  <tr><td><code>sa</code></td><td>Nothing</td><td>Prints one line per fleet</td></tr>
+  <tr><td><code>cn</code></td><td>New name</td><td>Renames the current fleet</td></tr>
+  <tr><td><code>u</code></td><td>Nothing</td><td>Undoes the newest undoable command</td></tr>
+  <tr><td><code>r</code></td><td>Nothing</td><td>Redoes the newest undone command</td></tr>
+  <tr><td><code>l</code></td><td>Nothing</td><td>Prints the undo list and the redo list</td></tr>
+  <tr><td><code>x</code></td><td>Nothing</td><td>Prints the closing line and stops</td></tr>
+</table>
+<p>Role <code>1</code> on a van fleet is van driver and role <code>2</code> is courier driver. Role <code>1</code> on a refrigerated fleet is refrigerated-truck driver and role <code>2</code> is cold-chain delivery driver. The prompt shows the names that apply to the current fleet.</p>
+
+<h2>5. Test plan and test cases</h2>
+<p>Testing is manual against the console, using the input of the assignment sample and further cases for errors and for undo. <code>tests/check_sdfms.py</code> feeds the same input to <code>java Main</code> and checks the messages. The screenshots below are captured from that program with the typed input echoed, which is what the command prompt shows. TC01 to TC24 are one continuous session, in the order of the sample. TC25 to TC30 are separate sessions. Every case passed.</p>
+
+<h3>5.1 Sample session</h3>
+
+<h3>TC01 Create a delivery van fleet</h3>
+<p><strong>Purpose.</strong> Create fleet <code>F001</code> named <code>CENTRAL EXPRESS</code> and make it current.</p>
+<p><strong>Input.</strong> <code>c</code>, <code>v</code>, <code>F001</code>, <code>CENTRAL EXPRESS</code>.</p>
+<p><strong>Expected.</strong> <code>Delivery van fleet is created.</code> and <code>Current fleet is changed to F001.</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc01.png" alt="TC01"><figcaption>Figure 5. TC01.</figcaption></figure>
+
+<h3>TC02 Add drivers to the van fleet</h3>
+<p><strong>Purpose.</strong> Add a van driver and a courier driver.</p>
+<p><strong>Input.</strong> <code>a</code> / <code>d001, Alex Chan</code> / <code>1</code>, then <code>a</code> / <code>d002, Jamie Lee</code> / <code>2</code>.</p>
+<p><strong>Expected.</strong> The role prompt offers van driver and courier driver. Each add prints <code>Driver is added.</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc02.png" alt="TC02"><figcaption>Figure 6. TC02.</figcaption></figure>
+
+<h3>TC03 Show the van fleet</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> Van Driver lists <code>d001, Alex Chan</code>. Courier Driver lists <code>d002, Jamie Lee</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc03.png" alt="TC03"><figcaption>Figure 7. TC03.</figcaption></figure>
+
+<h3>TC04 Create a refrigerated truck fleet</h3>
+<p><strong>Input.</strong> <code>c</code>, <code>r</code>, <code>F102</code>, <code>FROST LINE</code>.</p>
+<p><strong>Expected.</strong> <code>Refrigerated truck fleet is created.</code> and <code>Current fleet is changed to F102.</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc04.png" alt="TC04"><figcaption>Figure 8. TC04.</figcaption></figure>
+
+<h3>TC05 Display all fleets</h3>
+<p><strong>Input.</strong> <code>sa</code>.</p>
+<p><strong>Expected.</strong> The van fleet line, then the refrigerated fleet line, with no driver details.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc05.png" alt="TC05"><figcaption>Figure 9. TC05.</figcaption></figure>
+
+<h3>TC06 Add drivers to the refrigerated fleet</h3>
+<p><strong>Input.</strong> <code>d101, Morgan Wong</code> role <code>1</code>, then <code>d102, Taylor Lam</code> role <code>2</code>.</p>
+<p><strong>Expected.</strong> The role prompt offers refrigerated-truck driver and cold-chain delivery driver. Both drivers are added.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc06.png" alt="TC06"><figcaption>Figure 10. TC06.</figcaption></figure>
+
+<h3>TC07 Show the refrigerated fleet</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> Refrigerated-Truck Driver lists Morgan Wong. Cold-Chain Delivery Driver lists Taylor Lam.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc07.png" alt="TC07"><figcaption>Figure 11. TC07.</figcaption></figure>
+
+<h3>TC08 Set the current fleet</h3>
+<p><strong>Input.</strong> <code>s</code>, <code>F001</code>.</p>
+<p><strong>Expected.</strong> <code>Changed current fleet to F001.</code> The next menu names <code>F001 CENTRAL EXPRESS</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc08.png" alt="TC08"><figcaption>Figure 12. TC08.</figcaption></figure>
+
+<h3>TC09 Display all fleets after the switch</h3>
+<p><strong>Input.</strong> <code>sa</code>.</p>
+<p><strong>Expected.</strong> Both fleets are still listed. Switching the current fleet does not reorder or drop a fleet.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc09.png" alt="TC09"><figcaption>Figure 13. TC09.</figcaption></figure>
+
+<h3>TC10 Modify a driver role</h3>
+<p><strong>Input.</strong> <code>m</code>, <code>d001</code>, <code>2</code>.</p>
+<p><strong>Expected.</strong> <code>Driver role is updated.</code> The van role prompt is used because <code>F001</code> is current.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc10.png" alt="TC10"><figcaption>Figure 14. TC10.</figcaption></figure>
+
+<h3>TC11 Show the fleet after the role change</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> <code>Van Driver: NIL</code>. Courier Driver lists <code>d001</code> and then <code>d002</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc11.png" alt="TC11"><figcaption>Figure 15. TC11.</figcaption></figure>
+
+<h3>TC12 Delete a driver</h3>
+<p><strong>Input.</strong> <code>d</code>, <code>d002</code>.</p>
+<p><strong>Expected.</strong> <code>Driver is deleted.</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc12.png" alt="TC12"><figcaption>Figure 16. TC12.</figcaption></figure>
+
+<h3>TC13 Show the fleet after the delete</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> <code>Van Driver: NIL</code>. Courier Driver lists only <code>d001, Alex Chan</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc13.png" alt="TC13"><figcaption>Figure 17. TC13.</figcaption></figure>
+
+<h3>TC14 Change the fleet name</h3>
+<p><strong>Input.</strong> <code>cn</code>, <code>METRO EXPRESS</code>.</p>
+<p><strong>Expected.</strong> <code>Fleet name is updated.</code> The next menu says <code>F001 METRO EXPRESS</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc14.png" alt="TC14"><figcaption>Figure 18. TC14.</figcaption></figure>
+
+<h3>TC15 Show the fleet after the rename</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> The heading uses <code>METRO EXPRESS</code>. The driver list is unchanged.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc15.png" alt="TC15"><figcaption>Figure 19. TC15.</figcaption></figure>
+
+<h3>TC16 List undo and redo</h3>
+<p><strong>Input.</strong> <code>l</code>.</p>
+<p><strong>Expected.</strong> Nine undo lines, oldest first, from the create of <code>F001</code> through <code>Change fleet name, F001, METRO EXPRESS</code>. The create line still says <code>CENTRAL EXPRESS</code>. The redo list is empty. Set-current and show are absent.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc16.png" alt="TC16"><figcaption>Figure 20. TC16.</figcaption></figure>
+
+<h3>TC17 Undo the last three commands</h3>
+<p><strong>Input.</strong> <code>u</code> three times.</p>
+<p><strong>Expected.</strong> The messages undo change name, then delete driver <code>d002</code>, then modify role of <code>d001</code>. After the name is undone, the menu shows <code>CENTRAL EXPRESS</code> again.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc17.png" alt="TC17"><figcaption>Figure 21. TC17.</figcaption></figure>
+
+<h3>TC18 Show the fleet after undo</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> The van fleet is back to its state before the three undone commands: <code>d001</code> under Van Driver and <code>d002</code> under Courier Driver, name <code>CENTRAL EXPRESS</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc18.png" alt="TC18"><figcaption>Figure 22. TC18.</figcaption></figure>
+
+<h3>TC19 Redo the three commands</h3>
+<p><strong>Input.</strong> <code>r</code> three times.</p>
+<p><strong>Expected.</strong> Redo modify role, then delete, then change name. This is the reverse of TC17.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc19.png" alt="TC19"><figcaption>Figure 23. TC19.</figcaption></figure>
+
+<h3>TC20 Show the fleet after redo</h3>
+<p><strong>Input.</strong> <code>sf</code>.</p>
+<p><strong>Expected.</strong> <code>METRO EXPRESS</code>, <code>Van Driver: NIL</code>, and only <code>d001</code> under Courier Driver.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc20.png" alt="TC20"><figcaption>Figure 24. TC20.</figcaption></figure>
+
+<h3>TC21 Unknown fleet</h3>
+<p><strong>Input.</strong> <code>s</code>, <code>F999</code>.</p>
+<p><strong>Expected.</strong> <code>Fleet F999 is not found!</code> The current fleet stays <code>F001 METRO EXPRESS</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc21.png" alt="TC21"><figcaption>Figure 25. TC21.</figcaption></figure>
+
+<h3>TC22 Unknown driver</h3>
+<p><strong>Input.</strong> <code>d</code>, <code>d999</code>.</p>
+<p><strong>Expected.</strong> <code>Driver d999 is not found in the current fleet!</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc22.png" alt="TC22"><figcaption>Figure 26. TC22.</figcaption></figure>
+
+<h3>TC23 Invalid command</h3>
+<p><strong>Input.</strong> <code>q</code>.</p>
+<p><strong>Expected.</strong> <code>Invalid command!</code> The menu is shown again.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc23.png" alt="TC23"><figcaption>Figure 27. TC23.</figcaption></figure>
+
+<h3>TC24 Exit</h3>
+<p><strong>Input.</strong> <code>x</code>.</p>
+<p><strong>Expected.</strong> <code>Thank you for using SDFMS. System terminated.</code> The program stops.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc24.png" alt="TC24"><figcaption>Figure 28. TC24.</figcaption></figure>
+
+<h3>5.2 Further cases</h3>
+
+<h3>TC25 No current fleet</h3>
+<p><strong>Purpose.</strong> Commands that need a fleet, an empty display-all, and empty history.</p>
+<p><strong>Input.</strong> <code>a</code>, <code>m</code>, <code>d</code>, <code>sf</code>, <code>cn</code>, <code>sa</code>, <code>u</code>, <code>r</code>, <code>x</code> on a new program.</p>
+<p><strong>Expected.</strong> <code>No current fleet!</code> for the five data commands, <code>No fleet record.</code>, <code>Nothing to undo!</code>, <code>Nothing to redo!</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc25.png" alt="TC25"><figcaption>Figure 29. TC25.</figcaption></figure>
+
+<h3>TC26 Invalid fleet and driver input</h3>
+<p><strong>Purpose.</strong> Reject bad input without recording it.</p>
+<p><strong>Input.</strong> Empty fleet id; create <code>F001</code>; create <code>F001</code> again; type code <code>z</code>; role <code>9</code>; <code>no-comma</code>; <code>, Nameless</code>; a valid add of <code>d001</code>; the same id again with a valid role.</p>
+<p><strong>Expected.</strong> <code>Fleet ID cannot be empty!</code>, <code>Fleet F001 already exists!</code>, <code>Invalid fleet type!</code>, <code>Invalid role!</code>, <code>Invalid driver information!</code>, and <code>Driver d001 already exists in the current fleet!</code>. The valid create and the valid add still succeed.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc26.png" alt="TC26"><figcaption>Figure 30. TC26.</figcaption></figure>
+
+<h3>TC27 Undo delete restores order</h3>
+<p><strong>Purpose.</strong> Deleting a driver who is not at the end, then undoing, puts that driver back between the others.</p>
+<p><strong>Input.</strong> Add <code>d001</code> (van), <code>d002</code> (courier), <code>d003</code> (van). Delete <code>d002</code>. Undo. Show.</p>
+<p><strong>Expected.</strong> Van Driver lists <code>d001</code> then <code>d003</code>. Courier Driver lists <code>d002</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc27.png" alt="TC27"><figcaption>Figure 31. TC27.</figcaption></figure>
+
+<h3>TC28 Undo create and undo rename</h3>
+<p><strong>Purpose.</strong> Undoing create restores the previous current fleet. Undoing rename restores the old name of the fleet that was renamed, which is not required to be current at the time of the undo.</p>
+<p><strong>Input.</strong> Create <code>F001 CENTRAL EXPRESS</code>, rename it to <code>METRO EXPRESS</code>, create <code>F102</code>, undo, show, select <code>F001</code>, undo, show.</p>
+<p><strong>Expected.</strong> The first undo removes <code>F102</code> and the current fleet is <code>F001 METRO EXPRESS</code>. The second undo restores the name <code>CENTRAL EXPRESS</code>.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc28.png" alt="TC28"><figcaption>Figure 32. TC28.</figcaption></figure>
+
+<h3>TC29 Failed commands and the redo list</h3>
+<p><strong>Purpose.</strong> A failed command must not change history. A new successful command must clear redo.</p>
+<p><strong>Input.</strong> Create a fleet, add <code>d001</code>, undo, list, type <code>q</code>, delete <code>d999</code>, list, add <code>d002</code>, list, redo.</p>
+<p><strong>Expected.</strong> The first two lists are the same and the redo list contains the add of <code>d001</code>. After <code>d002</code> is added, the redo list is empty and redo prints <code>Nothing to redo!</code></p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc29.png" alt="TC29"><figcaption>Figure 33. TC29.</figcaption></figure>
+
+<h3>TC30 Undo every command, then redo</h3>
+<p><strong>Purpose.</strong> Undo can remove every fleet. Redo rebuilds both fleets, including a cold-chain driver. Upper-case type codes are accepted.</p>
+<p><strong>Input.</strong> <code>V</code> to create <code>F001</code> with <code>d001</code>, <code>R</code> to create <code>F102</code> with <code>d101</code> as role 2, four undos, display all, show, one extra undo, four redos, show, display all.</p>
+<p><strong>Expected.</strong> After four undos, display all prints <code>No fleet record.</code> and show prints <code>No current fleet!</code> The extra undo prints <code>Nothing to undo!</code> After four redos, <code>F102</code> is current, <code>d101</code> is a cold-chain delivery driver, and display all lists both fleets.</p>
+<p><strong>Result.</strong> <span class="pass">Pass</span></p>
+<figure><img class="shot" src="figures/tc30.png" alt="TC30"><figcaption>Figure 34. TC30.</figcaption></figure>
+
+<h2>6. Source code</h2>
+<p>The source is the <code>.java</code> files next to <code>run.bat</code>. Each class has a comment that states the pattern role it plays. The methods required by the given class diagram are unchanged: <code>VehicleFleet</code>, <code>DeliveryVanFleet</code>, <code>RefrigeratedTruckFleet</code>, and <code>Driver</code> still have the attributes and operations in Figure 1. Extra methods are the ones the patterns need, such as saving a memento and finding a driver.</p>
+<table>
+  <tr><th>File</th><th>Responsibility</th></tr>
+  <tr><td><code>Main.java</code></td><td>Invoker. Menu loop and factory registration.</td></tr>
+  <tr><td><code>Command.java</code>, <code>CommandFactory.java</code>, command classes</td><td>Command pattern.</td></tr>
+  <tr><td><code>Caretaker.java</code></td><td>Undo list and redo list.</td></tr>
+  <tr><td><code>FleetManager.java</code>, <code>SystemContext.java</code></td><td>Receiver and the objects a command needs.</td></tr>
+  <tr><td><code>VehicleFleet.java</code>, <code>DeliveryVanFleet.java</code>, <code>RefrigeratedTruckFleet.java</code></td><td>Fleet hierarchy and the name originator.</td></tr>
+  <tr><td><code>Driver.java</code></td><td>Driver and the role originator.</td></tr>
+  <tr><td><code>FleetNameMemento.java</code>, <code>DriverRoleMemento.java</code></td><td>Mementos.</td></tr>
+  <tr><td><code>FleetComponentFactory.java</code> and the three factory classes, <code>FleetFactoryProvider.java</code></td><td>Abstract factory and the driver factory.</td></tr>
+  <tr><td><code>InputNumbers.java</code></td><td>Reads a role number without throwing into the menu.</td></tr>
+  <tr><td><code>run.bat</code></td><td>Compiles and runs the system on Windows.</td></tr>
+</table>
+<p>Compile and run from the folder that contains the source:</p>
+<pre>javac *.java
+java Main</pre>
+
+</body>
+</html>
