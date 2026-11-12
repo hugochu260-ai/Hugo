@@ -1,14 +1,7 @@
+// Deletes a driver. Undo puts the drivers back in the previous order.
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: delete a driver from the current fleet.
- * Undo puts the same driver objects back in the order they had before the
- * deletion. That uses addDriver and dropDriver, which are the list
- * operations on the class diagram.
- */
 public class DeleteDriverCommand implements UndoableCommand {
     private Scanner scanner;
     private FleetSystem system;
@@ -17,10 +10,6 @@ public class DeleteDriverCommand implements UndoableCommand {
     private List<Driver> driversBeforeDelete;
     private String description;
 
-    /**
-     * @param scanner console input
-     * @param system  where the current fleet is kept
-     */
     public DeleteDriverCommand(Scanner scanner, FleetSystem system) {
         this.scanner = scanner;
         this.system = system;

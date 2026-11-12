@@ -1,18 +1,8 @@
-/**
- * ITP4507 SDFMS
- *
- * Delivery van fleet.
- * Role 1 is a van driver. Role 2 is a courier driver.
- * The constants and the two abstract operations from the class diagram
- * are implemented here. No further operation is added.
- */
+// Delivery van fleet. Role 1 is a van driver. Role 2 is a courier driver.
 public class DeliveryVanFleet extends VehicleFleet {
     private final int VAN_DRIVER_ROLE = 1;
     private final int COURIER_DRIVER_ROLE = 2;
 
-    /**
-     * @param fleetID the fleet id
-     */
     public DeliveryVanFleet(String fleetID) {
         super(fleetID);
     }

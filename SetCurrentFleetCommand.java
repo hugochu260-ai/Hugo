@@ -1,20 +1,10 @@
+// Selects the current fleet by id. This command is not undoable.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: select the current fleet by id.
- * The sample undo list does not include this action, so the class does
- * not implement {@link UndoableCommand}.
- */
 public class SetCurrentFleetCommand implements Command {
     private Scanner scanner;
     private FleetSystem system;
 
-    /**
-     * @param scanner console input
-     * @param system  where fleets are stored
-     */
     public SetCurrentFleetCommand(Scanner scanner, FleetSystem system) {
         this.scanner = scanner;
         this.system = system;

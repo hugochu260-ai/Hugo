@@ -1,14 +1,6 @@
+// Adds a driver to the fleet that is current when the command runs.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: add a driver to the fleet that is current when the
- * command runs. Undo and redo use that same fleet, even if another fleet
- * is current later. The driver object comes from {@link DriverFactory}.
- * The role names come from {@link VehicleFleetFactory}, not from an extra
- * operation on the fleet.
- */
 public class AddDriverCommand implements UndoableCommand {
     private Scanner scanner;
     private FleetSystem system;
@@ -18,12 +10,6 @@ public class AddDriverCommand implements UndoableCommand {
     private Driver driver;
     private String description;
 
-    /**
-     * @param scanner       console input
-     * @param system        where the current fleet is kept
-     * @param driverFactory creates the driver object
-     * @param fleetFactory  supplies the role names for this fleet type
-     */
     public AddDriverCommand(Scanner scanner, FleetSystem system, DriverFactory driverFactory,
             VehicleFleetFactory fleetFactory) {
         this.scanner = scanner;
@@ -60,7 +46,7 @@ public class AddDriverCommand implements UndoableCommand {
         }
 
         VehicleFleetFactory.FleetType type = fleetFactory.typeOf(fleet);
-        // The fleet subclass prints its own role prompt.
+
         fleet.updateDriverRole();
         String roleText = scanner.nextLine().trim();
         int role;

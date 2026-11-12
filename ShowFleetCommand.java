@@ -1,15 +1,7 @@
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: show the current fleet. Not undoable.
- * The fleet subclass decides the heading and the role labels.
- */
+// Shows the current fleet, including its drivers.
 public class ShowFleetCommand implements Command {
     private FleetSystem system;
 
-    /**
-     * @param system where the current fleet is kept
-     */
     public ShowFleetCommand(FleetSystem system) {
         this.system = system;
     }

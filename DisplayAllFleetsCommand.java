@@ -1,21 +1,10 @@
+// Lists every fleet in creation order, without drivers.
 import java.util.Vector;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: list every fleet in creation order, without drivers.
- * The heading comes from the factory that created the fleet, so a new
- * fleet type appears here with no change to this command and with no
- * extra operation on {@link VehicleFleet}.
- */
 public class DisplayAllFleetsCommand implements Command {
     private FleetSystem system;
     private VehicleFleetFactory fleetFactory;
 
-    /**
-     * @param system       where the fleets are stored
-     * @param fleetFactory supplies the one-line heading for each fleet
-     */
     public DisplayAllFleetsCommand(FleetSystem system, VehicleFleetFactory fleetFactory) {
         this.system = system;
         this.fleetFactory = fleetFactory;

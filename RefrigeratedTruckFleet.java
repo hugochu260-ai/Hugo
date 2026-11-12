@@ -1,19 +1,8 @@
-/**
- * ITP4507 SDFMS
- *
- * Refrigerated truck fleet.
- * Role 1 is a refrigerated-truck driver.
- * Role 2 is a cold-chain delivery driver.
- * The constants and the two abstract operations from the class diagram
- * are implemented here. No further operation is added.
- */
+// Refrigerated truck fleet. Role 1 is a refrigerated-truck driver. Role 2 is a cold-chain delivery driver.
 public class RefrigeratedTruckFleet extends VehicleFleet {
     private final int REFRIGERATED_TRUCK_DRIVER_ROLE = 1;
     private final int COLD_CHAIN_DELIVERY_DRIVER_ROLE = 2;
 
-    /**
-     * @param fleetID the fleet id
-     */
     public RefrigeratedTruckFleet(String fleetID) {
         super(fleetID);
     }

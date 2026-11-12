@@ -1,13 +1,6 @@
+// Creates a fleet, selects it, and can undo and redo that create.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: create a fleet and make it the current fleet.
- * The fleet object comes from {@link VehicleFleetFactory}.
- * Undo removes that fleet and, if it is still the current fleet, selects
- * the fleet that was current before. Redo puts the same fleet back.
- */
 public class CreateFleetCommand implements UndoableCommand {
     private Scanner scanner;
     private FleetSystem system;
@@ -16,11 +9,6 @@ public class CreateFleetCommand implements UndoableCommand {
     private VehicleFleet previousCurrent;
     private String description;
 
-    /**
-     * @param scanner      console input
-     * @param system       where fleets are stored
-     * @param fleetFactory creates the fleet object
-     */
     public CreateFleetCommand(Scanner scanner, FleetSystem system,
             VehicleFleetFactory fleetFactory) {
         this.scanner = scanner;

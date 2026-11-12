@@ -1,13 +1,6 @@
+// Renames the current fleet. Undo and redo restore the saved name mementos.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: change the name of the current fleet.
- * This command is the caretaker of two {@link FleetNameMemento} objects.
- * Undo restores the name from before the change. Redo restores the name
- * from after the change.
- */
 public class ChangeFleetNameCommand implements UndoableCommand {
     private Scanner scanner;
     private FleetSystem system;
@@ -15,10 +8,6 @@ public class ChangeFleetNameCommand implements UndoableCommand {
     private FleetNameMemento afterMemento;
     private String description;
 
-    /**
-     * @param scanner console input
-     * @param system  where the current fleet is kept
-     */
     public ChangeFleetNameCommand(Scanner scanner, FleetSystem system) {
         this.scanner = scanner;
         this.system = system;

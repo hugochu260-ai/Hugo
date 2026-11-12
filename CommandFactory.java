@@ -1,15 +1,6 @@
+// Creates the command object for a menu code.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Factory for command objects.
- * The menu codes are fixed by the assignment, so they are created in this
- * one class. Fleet creation is the part that must stay open, and that is
- * delegated to {@link VehicleFleetFactory}. Driver creation is delegated
- * to {@link DriverFactory}. No command class calls {@code new} on a fleet
- * or a driver.
- */
 public class CommandFactory {
     private Scanner scanner;
     private FleetSystem system;
@@ -17,12 +8,6 @@ public class CommandFactory {
     private VehicleFleetFactory fleetFactory;
     private DriverFactory driverFactory;
 
-    /**
-     * @param scanner      the shared console scanner
-     * @param system       the fleet receiver
-     * @param caretaker    the undo and redo history
-     * @param fleetFactory the factory that creates fleets
-     */
     public CommandFactory(Scanner scanner, FleetSystem system, Caretaker caretaker,
             VehicleFleetFactory fleetFactory) {
         this.scanner = scanner;
@@ -32,10 +17,6 @@ public class CommandFactory {
         this.driverFactory = new DriverFactory();
     }
 
-    /**
-     * @param code the menu code, already trimmed
-     * @return a command ready to execute, or {@code null} when the code is unknown
-     */
     public Command createCommand(String code) {
         if (code == null) {
             return null;

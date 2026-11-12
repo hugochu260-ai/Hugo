@@ -1,20 +1,8 @@
+// Prints the menu, runs the command, and records a successful undoable command. Exit stays here.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Client of the command pattern. The loop prints the menu, asks
- * {@link CommandFactory} for a command, and executes it. A successful
- * {@link UndoableCommand} is given to the {@link Caretaker}.
- * Exit is handled here. The assignment's command list does not include
- * exit, so exit is not a command object.
- */
 public class Main {
-    /**
-     * Starts the console application.
-     *
-     * @param args unused
-     */
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         FleetSystem system = new FleetSystem();
@@ -44,12 +32,6 @@ public class Main {
         scanner.close();
     }
 
-    /**
-     * Prints the title and the command menu.
-     * The current-fleet line is printed only after a fleet has been selected.
-     *
-     * @param current the current fleet, or {@code null} when none is selected
-     */
     private static void printMenu(VehicleFleet current) {
         System.out.println("Smart Delivery Fleet Management System (SDFMS)");
         System.out.println("c = create fleet, s = set current fleet, a = add driver, m = modify driver role,");

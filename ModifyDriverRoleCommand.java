@@ -1,14 +1,6 @@
+// Changes a driver role. Undo and redo restore the saved role mementos.
 import java.util.Scanner;
 
-/**
- * ITP4507 SDFMS
- *
- * Concrete command: change a driver's role.
- * This command is the caretaker of two role mementos. One is taken before
- * the change and one after it. Undo and redo only call {@code restore()}.
- * They do not ask for the role again, and they do not call {@code setRole}
- * themselves. The role name in the history line comes from the factory.
- */
 public class ModifyDriverRoleCommand implements UndoableCommand {
     private Scanner scanner;
     private FleetSystem system;
@@ -17,11 +9,6 @@ public class ModifyDriverRoleCommand implements UndoableCommand {
     private DriverRoleMemento afterMemento;
     private String description;
 
-    /**
-     * @param scanner      console input
-     * @param system       where the current fleet is kept
-     * @param fleetFactory supplies the role names for this fleet type
-     */
     public ModifyDriverRoleCommand(Scanner scanner, FleetSystem system,
             VehicleFleetFactory fleetFactory) {
         this.scanner = scanner;
