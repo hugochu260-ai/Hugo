@@ -33,14 +33,35 @@ public class Main {
     }
 
     private static void printMenu(VehicleFleet current) {
-        System.out.println("Smart Delivery Fleet Management System (SDFMS)");
-        System.out.println("c = create fleet, s = set current fleet, a = add driver, m = modify driver role,");
-        System.out.println("d = delete driver, sf = show fleet, sa = display all fleets, cn = change fleet name,");
-        System.out.println("u = undo, r = redo, l = list undo/redo, x = exit system");
-        if (current != null) {
-            System.out.println("The current fleet is " + current.getFleetID()
-                    + " " + current.getName() + ".");
+        System.out.println();
+        System.out.println("==============================================");
+        System.out.println("  Smart Delivery Fleet Management System");
+        System.out.println("  SDFMS");
+        System.out.println("==============================================");
+        if (current == null) {
+            System.out.println("  Current fleet : (none)");
+        } else {
+            System.out.println("  Current fleet : " + current.getFleetID()
+                    + "  " + current.getName());
         }
-        System.out.print("Please enter command [ c | s | a | m | d | sf | sa | cn | u | r | l | x ] :- ");
+        System.out.println("----------------------------------------------");
+        System.out.println("  Fleet");
+        System.out.println("    c   create fleet");
+        System.out.println("    s   set current fleet");
+        System.out.println("    sf  show fleet");
+        System.out.println("    sa  display all fleets");
+        System.out.println("    cn  change fleet name");
+        System.out.println("  Driver");
+        System.out.println("    a   add driver");
+        System.out.println("    m   modify driver role");
+        System.out.println("    d   delete driver");
+        System.out.println("  History");
+        System.out.println("    u   undo");
+        System.out.println("    r   redo");
+        System.out.println("    l   list undo/redo");
+        System.out.println("  Exit");
+        System.out.println("    x   exit system");
+        System.out.println("----------------------------------------------");
+        System.out.print("Command [ c | s | a | m | d | sf | sa | cn | u | r | l | x ] :- ");
     }
 }
