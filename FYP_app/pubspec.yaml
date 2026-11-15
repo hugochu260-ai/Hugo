@@ -47,6 +47,8 @@ dependencies:
   flutter_tts: ^4.2.5
   intl: ^0.20.3
   flutter_vlc_player_16kb: ^7.4.7
+  image_picker: ^1.1.2
+  path_provider: ^2.1.5
 dependency_overrides:
   usb_serial:
     path: packages/usb_serial

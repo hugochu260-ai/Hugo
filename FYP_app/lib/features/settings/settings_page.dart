@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/assistant_image.dart';
+import '../../core/widgets/assistant_portrait.dart';
 import '../../core/widgets/section_card.dart';
 import '../../services/ai/ai_agent_service.dart';
 import '../../services/settings_store.dart';
@@ -251,6 +253,64 @@ class _SettingsPageState extends State<SettingsPage> {
                         }
                       },
                     ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: p.outline),
+                      ),
+                      child: AssistantPortrait(
+                        imagePath: settings.assistantImagePath,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          str.tr(
+                            '阿智頭像',
+                            '阿智头像',
+                            'Assistant portrait',
+                          ),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: p.text,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          str.tr(
+                            '點一下浮動頭像會打開對話。長按頭像，或按下面的按鈕，就可以換成自己的相片。',
+                            '点一下浮动头像会打开对话。长按头像，或按下面的按钮，就可以换成自己的照片。',
+                            'Tap the floating portrait to talk. Long-press it, or use the button, to choose a photo.',
+                          ),
+                          style: TextStyle(color: p.muted, fontSize: 13, height: 1.35),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => changeAssistantImage(context),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: Text(str.tr('更換頭像', '更换头像', 'Change photo')),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),

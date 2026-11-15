@@ -27,7 +27,7 @@ void main() {
         screen: screen,
         safe: EdgeInsets.zero,
       ),
-      const Offset(324, 724),
+      const Offset(304, 692),
     );
   });
 
@@ -53,12 +53,12 @@ void main() {
       ),
     );
 
-    expect(find.text('智'), findsOneWidget);
-    await tester.tap(find.text('智'));
+    expect(find.text('阿智'), findsOneWidget);
+    await tester.tap(find.text('阿智'));
     await tester.pump();
     expect(opens, 1);
 
-    await tester.drag(find.text('智'), const Offset(-500, -500));
+    await tester.drag(find.text('阿智'), const Offset(-500, -500));
     await tester.pumpAndSettle();
     expect(saved, AssistantCorner.topLeft);
   });

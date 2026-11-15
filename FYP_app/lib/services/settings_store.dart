@@ -26,6 +26,7 @@ class SettingsStore extends ChangeNotifier {
   static const _kAppLanguage = 'app_language'; // zh_HK | zh_CN | en_US
   static const _kAssistantName = 'assistant_name';
   static const _kAssistantCorner = 'assistant_corner';
+  static const _kAssistantImage = 'assistant_image_path';
   static const _kCustomWakeWords = 'custom_wake_words';
   static const _kTiltMode = 'tilt_mode'; // auto | handheld | mounted
   static const _kFontScale = 'font_scale';
@@ -75,6 +76,8 @@ class SettingsStore extends ChangeNotifier {
   String assistantName = '阿智';
   /// Resting corner of the draggable assistant avatar.
   String assistantCorner = 'bottomRight';
+  /// Absolute path of a user-chosen portrait. Empty means the drawn default.
+  String assistantImagePath = '';
   String customWakeWords = '喂助手,輪椅助手';
   String tiltMode = 'auto'; // 'auto' (handheld until car connects), 'handheld', 'mounted'
   double fontScale = 1.10;
@@ -148,6 +151,7 @@ class SettingsStore extends ChangeNotifier {
         .contains(assistantCorner)) {
       assistantCorner = 'bottomRight';
     }
+    assistantImagePath = p.getString(_kAssistantImage) ?? '';
     customWakeWords = p.getString(_kCustomWakeWords) ?? customWakeWords;
     tiltMode = p.getString(_kTiltMode) ?? tiltMode;
     fontScale = (p.getDouble(_kFontScale) ?? fontScale).clamp(0.85, 1.50);
@@ -234,6 +238,13 @@ class SettingsStore extends ChangeNotifier {
     if (assistantName == clean) return Future.value();
     assistantName = clean;
     return _putString(_kAssistantName, clean);
+  }
+
+  Future<void> updateAssistantImagePath(String v) {
+    final clean = v.trim();
+    if (assistantImagePath == clean) return Future.value();
+    assistantImagePath = clean;
+    return _putString(_kAssistantImage, clean);
   }
 
   Future<void> updateCustomWakeWords(String v) {

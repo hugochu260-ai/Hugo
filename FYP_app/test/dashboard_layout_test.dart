@@ -18,7 +18,7 @@ import 'package:fyp_app/services/tilt/tilt_monitor_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('home leads with the next dose and keeps other tools collapsed',
+  testWidgets('home leads with the next reminder card and visible shortcuts',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     final settings = SettingsStore();
@@ -79,11 +79,8 @@ void main() {
             body: DashboardPage(
               onNavigate: (_) {},
               onOpenMedications: () {},
-              onOpenVoiceAssistant: () {},
               onOpenVisionHelper: () {},
-              onOpenMagnifier: () {},
               onOpenAntiLostCard: () {},
-              onOpenSettings: () {},
             ),
           ),
         ),
@@ -91,21 +88,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('下一劑藥'), findsOneWidget);
-    expect(find.text('未完成'), findsOneWidget);
-    expect(find.text('飲水未夠'), findsOneWidget);
-    expect(find.text('其他功能'), findsOneWidget);
-    expect(find.text('拍藥袋／睇環境'), findsNothing);
-    expect(find.text('AI 拍藥袋自動設鬧鐘'), findsNothing);
+    expect(find.text('你好'), findsOneWidget);
+    expect(find.text('下一項提醒'), findsOneWidget);
+    expect(find.text('08:30'), findsOneWidget);
+    expect(find.text('緊急 SOS'), findsOneWidget);
+    expect(find.textContaining('今日飲水'), findsOneWidget);
+    expect(find.text('拍藥袋'), findsOneWidget);
+    expect(find.text('醫療卡'), findsOneWidget);
+    expect(find.text('其他功能'), findsNothing);
+    expect(find.text('緊急求助 SOS'), findsNothing);
 
-    await tester.tap(find.text('其他功能'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('拍藥袋／睇環境'), findsOneWidget);
-    expect(find.text('眼控溝通板'), findsOneWidget);
-
-    final doseTop = tester.getTopLeft(find.text('下一劑藥')).dy;
-    final toolsTop = tester.getTopLeft(find.text('其他功能')).dy;
+    final doseTop = tester.getTopLeft(find.text('下一項提醒')).dy;
+    final toolsTop = tester.getTopLeft(find.text('拍藥袋')).dy;
     expect(doseTop, lessThan(toolsTop));
   });
 }

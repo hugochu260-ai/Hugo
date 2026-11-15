@@ -10,6 +10,8 @@
 	<string>智行友伴</string>
 	<key>NSCameraUsageDescription</key>
 	<string>用於眼控識別、無障礙溝通與視覺輔助。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>用來更換阿智的頭像相片。</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>用於語音喚醒助手及廣東話語音指令。</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

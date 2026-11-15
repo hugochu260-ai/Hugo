@@ -58,8 +58,8 @@ class AppStrings {
 
   String get appTitle => tr('智行友伴', '智行友伴', 'Smart Companion');
   String get navHome => tr('首頁', '首页', 'Home');
-  String get navEyeAac => tr('溝通與眼控', '沟通与眼控', 'AAC & Eye');
-  String get navBusMobility => tr('出行與巴士', '出行与公交', 'Bus & Go');
+  String get navEyeAac => tr('溝通', '沟通', 'Talk');
+  String get navBusMobility => tr('出行', '出行', 'Go');
   String get navAiAssistant => tr('AI 助手', 'AI 助手', 'AI Helper');
   String get navDevLab => tr('工程測試', '工程测试', 'Dev Lab');
 
@@ -68,6 +68,7 @@ class AppStrings {
   String get stopReadTooltip => tr('停止朗讀', '停止朗读', 'Stop Reading');
   String get voiceBtnLabel => tr('呼叫語音助手', '呼叫语音助手', 'Voice Assistant');
   String get sosBtnLabel => tr('緊急求助 SOS', '紧急求助 SOS', 'Emergency SOS');
+  String get sosPillLabel => tr('緊急 SOS', '紧急 SOS', 'SOS');
   String get visionBtnLabel => tr('AI 拍藥袋／睇環境', 'AI 拍药袋／看环境', 'AI Vision Helper');
 
   String wakeBadge(String name, bool listening, bool enabled) {

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/assistant_avatar.dart';
+import '../../core/widgets/assistant_image.dart';
 import '../../core/widgets/elderly_toolkit_sheets.dart';
 import '../../core/widgets/sos_emergency_dialog.dart';
 import '../../core/widgets/vision_helper_sheet.dart';
@@ -221,11 +222,8 @@ class _AppShellState extends State<AppShell> {
           key: const ValueKey('home'),
           onNavigate: (i) => _go(i, devMode),
           onOpenMedications: () => _go(1, devMode, eyeTab: 2),
-          onOpenVoiceAssistant: () => _openVoiceAssistant(),
           onOpenVisionHelper: _openVisionHelper,
-          onOpenMagnifier: _openMagnifier,
           onOpenAntiLostCard: _openAntiLostCard,
-          onOpenSettings: _openTopSettingsPage,
         );
       case 1:
         return EyePage(
@@ -249,11 +247,8 @@ class _AppShellState extends State<AppShell> {
           key: const ValueKey('home'),
           onNavigate: (i) => _go(i, devMode),
           onOpenMedications: () => _go(1, devMode, eyeTab: 2),
-          onOpenVoiceAssistant: () => _openVoiceAssistant(),
           onOpenVisionHelper: _openVisionHelper,
-          onOpenMagnifier: _openMagnifier,
           onOpenAntiLostCard: _openAntiLostCard,
-          onOpenSettings: _openTopSettingsPage,
         );
     }
   }
@@ -284,11 +279,63 @@ class _AppShellState extends State<AppShell> {
           Icon(Icons.accessible_forward_rounded, color: p.primary, size: 25),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(s.appTitle, overflow: TextOverflow.ellipsis),
+            child: Text(
+              s.appTitle,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: p.primary, fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
-      actions: [
+      actions: safeIdx == 0
+          ? [
+              PopupMenuButton<String>(
+                tooltip: s.tr('更多', '更多', 'More'),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'lang':
+                      settings.cycleLanguage();
+                    case 'read':
+                      _readCurrentScreenSummary();
+                    case 'glass':
+                      _openMagnifier();
+                    case 'settings':
+                      _openTopSettingsPage();
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'lang',
+                    child: Text(s.tr('切換語言', '切换语言', 'Switch language')),
+                  ),
+                  PopupMenuItem(
+                    value: 'read',
+                    child: Text(s.readAloudTooltip),
+                  ),
+                  PopupMenuItem(
+                    value: 'glass',
+                    child: Text(s.tr('放大鏡與電筒', '放大镜与手电筒', 'Magnifier and torch')),
+                  ),
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Text(s.settingsTooltip),
+                  ),
+                ],
+              ),
+            ]
+          : [
+        IconButton(
+          tooltip: s.sosBtnLabel,
+          onPressed: () {
+            if (_sosDialogOpen) return;
+            _sosDialogOpen = true;
+            showDialog<void>(
+              context: context,
+              builder: (_) => const SosEmergencyDialog(),
+            ).whenComplete(() => _sosDialogOpen = false);
+          },
+          icon: Icon(Icons.emergency_rounded, color: p.danger),
+        ),
         PopupMenuButton<String>(
           tooltip: s.tr('切換語言', '切换语言', 'Switch Language'),
           onSelected: settings.updateAppLanguage,
@@ -393,7 +440,7 @@ class _AppShellState extends State<AppShell> {
     // Notice Tab 4 dynamically displays the user's custom assistantName!
     final aiTabLabel = settings.assistantName.trim().isEmpty
         ? s.navAiAssistant
-        : '${settings.assistantName} AI';
+        : settings.assistantName;
 
     final navItems = <(IconData, IconData, String)>[
       (Icons.home_outlined, Icons.home_rounded, s.navHome),
@@ -467,10 +514,12 @@ class _AppShellState extends State<AppShell> {
           if (!_voiceSheetOpen)
             AssistantAvatar(
               name: settings.assistantName,
+              imagePath: settings.assistantImagePath,
               corner: parseAssistantCorner(settings.assistantCorner),
               listening: listening,
               safe: avatarSafe,
               onOpen: () => _openVoiceAssistant(),
+              onLongPress: () => changeAssistantImage(context),
               onCornerChanged: (corner) {
                 unawaited(settings.updateAssistantCorner(corner.name));
               },
