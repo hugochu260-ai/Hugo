@@ -25,6 +25,7 @@ class SettingsStore extends ChangeNotifier {
   // Accessibility, Language, Custom Wake Name, Smart Tilt & Elderly Hub keys
   static const _kAppLanguage = 'app_language'; // zh_HK | zh_CN | en_US
   static const _kAssistantName = 'assistant_name';
+  static const _kAssistantCorner = 'assistant_corner';
   static const _kCustomWakeWords = 'custom_wake_words';
   static const _kTiltMode = 'tilt_mode'; // auto | handheld | mounted
   static const _kFontScale = 'font_scale';
@@ -72,6 +73,8 @@ class SettingsStore extends ChangeNotifier {
   // Language, Custom Wake Name, Smart Tilt & Elderly Toolkit defaults
   String appLanguage = 'zh_HK'; // zh_HK, zh_CN, en_US
   String assistantName = '阿智';
+  /// Resting corner of the draggable assistant avatar.
+  String assistantCorner = 'bottomRight';
   String customWakeWords = '喂助手,輪椅助手';
   String tiltMode = 'auto'; // 'auto' (handheld until car connects), 'handheld', 'mounted'
   double fontScale = 1.10;
@@ -140,6 +143,11 @@ class SettingsStore extends ChangeNotifier {
     appLanguage = p.getString(_kAppLanguage) ?? appLanguage;
     assistantName = p.getString(_kAssistantName) ?? assistantName;
     if (assistantName.trim().isEmpty) assistantName = '阿智';
+    assistantCorner = p.getString(_kAssistantCorner) ?? assistantCorner;
+    if (!const {'topLeft', 'topRight', 'bottomLeft', 'bottomRight'}
+        .contains(assistantCorner)) {
+      assistantCorner = 'bottomRight';
+    }
     customWakeWords = p.getString(_kCustomWakeWords) ?? customWakeWords;
     tiltMode = p.getString(_kTiltMode) ?? tiltMode;
     fontScale = (p.getDouble(_kFontScale) ?? fontScale).clamp(0.85, 1.50);
@@ -209,6 +217,16 @@ class SettingsStore extends ChangeNotifier {
     final idx = order.indexOf(appLanguage);
     final next = order[(idx + 1) % order.length];
     return updateAppLanguage(next);
+  }
+
+  Future<void> updateAssistantCorner(String v) {
+    if (!const {'topLeft', 'topRight', 'bottomLeft', 'bottomRight'}
+        .contains(v)) {
+      return Future.value();
+    }
+    if (assistantCorner == v) return Future.value();
+    assistantCorner = v;
+    return _putString(_kAssistantCorner, v);
   }
 
   Future<void> updateAssistantName(String v) {

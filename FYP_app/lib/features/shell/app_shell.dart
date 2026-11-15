@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/responsive.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/assistant_avatar.dart';
 import '../../core/widgets/elderly_toolkit_sheets.dart';
 import '../../core/widgets/sos_emergency_dialog.dart';
 import '../../core/widgets/vision_helper_sheet.dart';
@@ -35,6 +36,7 @@ class _AppShellState extends State<AppShell> {
   int _index = 0;
   int _eyeInitialTab = 0;
   bool _sosDialogOpen = false;
+  bool _voiceSheetOpen = false;
 
   @override
   void initState() {
@@ -63,6 +65,7 @@ class _AppShellState extends State<AppShell> {
   Future<void> _openVoiceAssistant({String initialCommand = ''}) async {
     final wake = context.read<VoiceWakeService>();
     wake.setDialogOpen(true);
+    if (mounted) setState(() => _voiceSheetOpen = true);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -73,6 +76,7 @@ class _AppShellState extends State<AppShell> {
       builder: (_) => VoiceAssistantSheet(initialCommand: initialCommand),
     );
     wake.setDialogOpen(false);
+    if (mounted) setState(() => _voiceSheetOpen = false);
   }
 
   Future<void> _openVisionHelper() async {
@@ -328,11 +332,6 @@ class _AppShellState extends State<AppShell> {
             color: tts.speaking ? p.danger : p.primary,
           ),
         ),
-        IconButton(
-          tooltip: s.voiceBtnLabel,
-          onPressed: () => _openVoiceAssistant(),
-          icon: Icon(Icons.mic_rounded, color: p.primary),
-        ),
         Padding(
           padding: const EdgeInsets.only(right: 6),
           child: IconButton(
@@ -444,12 +443,40 @@ class _AppShellState extends State<AppShell> {
             ),
           );
 
+    final listening = context.select<VoiceWakeService, bool>(
+      (wake) => wake.passiveListening,
+    );
+    final tablet = Responsive.isTablet(context);
+    final mq = MediaQuery.of(context);
+    final avatarSafe = EdgeInsets.fromLTRB(
+      mq.padding.left + (tablet ? 80 : 0),
+      mq.padding.top + kToolbarHeight,
+      mq.padding.right,
+      mq.padding.bottom + (tablet ? 0 : kBottomNavigationBarHeight),
+    );
+
     // Global touch detector: when user holds/taps screen, suppress false tilt alarms!
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) => tilt.recordUserTouch(),
       onPointerMove: (_) => tilt.recordUserTouch(),
-      child: scaffold,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          scaffold,
+          if (!_voiceSheetOpen)
+            AssistantAvatar(
+              name: settings.assistantName,
+              corner: parseAssistantCorner(settings.assistantCorner),
+              listening: listening,
+              safe: avatarSafe,
+              onOpen: () => _openVoiceAssistant(),
+              onCornerChanged: (corner) {
+                unawaited(settings.updateAssistantCorner(corner.name));
+              },
+            ),
+        ],
+      ),
     );
   }
 }
