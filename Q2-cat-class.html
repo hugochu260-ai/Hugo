@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lab 8 Q2</title></head>
+<body>
+<div id="output"></div>
+<script>
+class Cat {
+    constructor(name, gender) { this.name = name; this.gender = gender; }
+    getName() { return this.name; }
+    getGender() { return this.gender; }
+    setName(name) { this.name = name; }
+    setGender(gender) { this.gender = gender; }
+}
+const cat = new Cat('Thomas', 'male');
+const describe = () => `class: cat\ncat.name: ${cat.getName()}\ncat.gender: ${cat.getGender()}`;
+const before = describe();
+cat.setName('Kitty');
+cat.setGender('female');
+document.getElementById('output').innerText = `Create a cat object using constructor\n${before}\n\nChange the properties using set methods\n${describe()}`;
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lab 8 Q4</title></head>
+<body>
+<pre id="output" style="white-space: pre-wrap; overflow-wrap: anywhere"></pre>
+<script>
+class Shape {
+    #x; #y;
+    constructor(x, y) { this.#x = x; this.#y = y; }
+    getX() { return this.#x; }
+    getY() { return this.#y; }
+    getWidth() { return 0; }
+    getHeight() { return 0; }
+    getArea() { return 0; }
+}
+class Square extends Shape {
+    #size;
+    constructor(x, y, size) { super(x, y); this.#size = size; }
+    getWidth() { return this.#size; }
+    getHeight() { return this.#size; }
+    getArea() { return this.#size * this.#size; }
+}
+class Circle extends Shape {
+    #radius;
+    constructor(x, y, radius) { super(x, y); this.#radius = radius; }
+    getWidth() { return 2 * this.#radius; }
+    getHeight() { return 2 * this.#radius; }
+    getArea() { return Math.PI * this.#radius ** 2; }
+}
+const shapes = [new Square(10, 10, 20), new Circle(50, 50, 5)];
+const lines = shapes.map(shape => `Shape(x=${shape.getX()}, y=${shape.getY()}, width=${shape.getWidth()}, height=${shape.getHeight()}, area=${shape.getArea()})`);
+for (const line of lines) console.log(line);
+document.getElementById('output').textContent = lines.join('\n');
+</script>
+</body>
+</html>

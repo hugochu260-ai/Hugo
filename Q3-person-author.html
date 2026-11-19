@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lab 8 Q3</title></head>
+<body>
+<pre id="output" style="white-space: pre-wrap; overflow-wrap: anywhere"></pre>
+<script>
+class Person {
+    #name;
+    constructor(name) { this.#name = name; }
+    getName() { return this.#name; }
+}
+class Author extends Person {
+    #books;
+    constructor(name, books) { super(name); this.#books = [...books]; }
+    getBooks() { return [...this.#books]; }
+}
+const person = new Person('John Smith');
+const authors = [
+    new Author('Dustin Diaz', ['JavaScript Design Patterns']),
+    new Author('Ross Harmes', ['JavaScript Design Patterns'])
+];
+const lines = [person.getName()];
+for (const author of authors) {
+    lines.push(author.getName(), ...author.getBooks());
+}
+for (const line of lines) console.log(line);
+document.getElementById('output').textContent = lines.join('\n');
+</script>
+</body>
+</html>
