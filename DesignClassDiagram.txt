@@ -1,0 +1,52 @@
+Laboratory Exercise 6 Part II — design class diagram
+SuperBank Corporation, Memento pattern
+
+Caretaker keeps an undo stack of Memento objects. Each memento snapshots
+one originator. undo() restores the most recently saved memento.
+
++---------------------------+          0..*          +----------------------+
+| Caretaker                 |<>----------------------| Memento              |
++---------------------------+   undoList             +----------------------+
+| - undoList : Vector       |                        | + restore() : void   |
++---------------------------+                        +----------+-----------+
+| + Caretaker()             |                                   ^
+| + saveAccount(a) : void   |                                   |
+| + saveCustomer(c) : void  |                    +--------------+--------------+
+| + undo() : void           |                    |                             |
++---------------------------+                    |                             |
+                                      +----------+-----------+    +------------+------------+
+                                      | AccountMemento       |    | CustomerMemento         |
+                                      +----------------------+    +-------------------------+
+                                      | - account : Account  |    | - customer : Customer   |
+                                      | - balance : double   |    | - accounts : Vector     |
+                                      +----------------------+    +-------------------------+
+                                      | + AccountMemento(a)  |    | + CustomerMemento(c)    |
+                                      | + restore() : void   |    | + restore() : void      |
+                                      +----------+-----------+    +------------+------------+
+                                                 | 1                           | 1
+                                                 |                             |
+                                                 v                             v
++-------------------------------+      1     1..*     +----------------------------------+
+| Customer                      |---------------------| Account                          |
++-------------------------------+        has          +----------------------------------+
+| - name : String               |                     | - accountNumber : String         |
+| - address : String            |                     | - balance : double               |
+| - accounts : Hashtable        |                     +----------------------------------+
++-------------------------------+                     | + Account(number, balance)       |
+| + Customer(name, address)     |                     | + increase(amount : double)      |
+| + getName() : String          |                     | + decrease(amount : double)      |
+| + getAddress() : String       |                     | + getAccountNumber() : String    |
+| + addAccount(a) : void        |                     | + getBalance() : double          |
+| + removeAccount(a) : void     |                     | - setBalance(balance) : void     |
+| + getAccount(number) : Account|                     +----------------------------------+
+| + getAllAccounts() : Enumeration|
++-------------------------------+
+
+Undo behaviour
+1. saveAccount snapshots the account balance. restore sets that balance back.
+2. saveCustomer snapshots which accounts the customer holds.
+   restore adds back an account that was removed, or removes an account that
+   was added, by calling the customer's own addAccount / removeAccount.
+3. Account balance and customer membership are saved separately, so an
+   account undo does not change who holds the account, and a customer undo
+   does not roll back balances.
